@@ -5,23 +5,13 @@ import { Link } from "react-router-dom";
 import { Shield, Lock, FileText, Menu, X, Wallet, LogOut } from "lucide-react";
 import ThemeSwitcher from './ThemeSwitcher';
 import { useWallet, shortenAddress } from '@/contexts/WalletContext';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { account, connectWallet, disconnectWallet, isConnecting, walletType } = useWallet();
+  const { account, connectWallet, disconnectWallet, isConnecting } = useWallet();
 
   const toggleMenu = () => {
     setIsMenuOpen(prev => !prev);
-  };
-
-  const handleConnectWallet = (type: 'metamask' | 'walletconnect') => {
-    connectWallet(type);
   };
 
   return (
@@ -54,36 +44,20 @@ const Navbar = () => {
           <ThemeSwitcher />
           
           {!account ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="hidden md:flex items-center gap-1 border-guardian-primary/50 hover:border-guardian-primary text-guardian-primary hover:bg-guardian-primary/10 dark:border-guardian-primary/70 dark:text-guardian-primary"
-                  disabled={isConnecting}
-                >
-                  <Wallet className="h-4 w-4" />
-                  <span>{isConnecting ? 'Connecting...' : 'Connect Wallet'}</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => handleConnectWallet('metamask')}>
-                  <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" alt="MetaMask" className="w-5 h-5 mr-2" />
-                  MetaMask
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleConnectWallet('walletconnect')}>
-                  <img src="https://1000logos.net/wp-content/uploads/2022/05/WalletConnect-Logo.png" alt="WalletConnect" className="w-5 h-5 mr-2" />
-                  WalletConnect
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="hidden md:flex items-center gap-1 border-guardian-primary/50 hover:border-guardian-primary text-guardian-primary hover:bg-guardian-primary/10 dark:border-guardian-primary/70 dark:text-guardian-primary"
+              onClick={connectWallet}
+              disabled={isConnecting}
+            >
+              <Wallet className="h-4 w-4" />
+              <span>{isConnecting ? 'Connecting...' : 'Connect Wallet'}</span>
+            </Button>
           ) : (
             <div className="hidden md:flex items-center gap-2">
               <div className="px-3 py-1.5 rounded-full text-sm font-medium bg-guardian-primary/10 text-guardian-primary border border-guardian-primary/20">
                 {shortenAddress(account)}
-                {walletType === 'walletconnect' && (
-                  <span className="ml-1 text-xs opacity-70">(WalletConnect)</span>
-                )}
               </div>
               <Button 
                 variant="ghost" 
@@ -146,39 +120,22 @@ const Navbar = () => {
           </Link>
           <div className="pt-2 flex flex-col space-y-3">
             {!account ? (
-              <div className="space-y-2">
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-center items-center gap-1 border-guardian-primary/50 hover:border-guardian-primary"
-                  onClick={() => {
-                    handleConnectWallet('metamask');
-                    setIsMenuOpen(false);
-                  }}
-                  disabled={isConnecting}
-                >
-                  <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" alt="MetaMask" className="w-4 h-4 mr-1" />
-                  <span>{isConnecting ? 'Connecting...' : 'Connect MetaMask'}</span>
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-center items-center gap-1 border-guardian-primary/50 hover:border-guardian-primary"
-                  onClick={() => {
-                    handleConnectWallet('walletconnect');
-                    setIsMenuOpen(false);
-                  }}
-                  disabled={isConnecting}
-                >
-                  <img src="https://1000logos.net/wp-content/uploads/2022/05/WalletConnect-Logo.png" alt="WalletConnect" className="w-4 h-4 mr-1" />
-                  <span>{isConnecting ? 'Connecting...' : 'Connect WalletConnect'}</span>
-                </Button>
-              </div>
+              <Button 
+                variant="outline" 
+                className="w-full justify-center items-center gap-1 border-guardian-primary/50 hover:border-guardian-primary"
+                onClick={() => {
+                  connectWallet();
+                  setIsMenuOpen(false);
+                }}
+                disabled={isConnecting}
+              >
+                <Wallet className="h-4 w-4" />
+                <span>{isConnecting ? 'Connecting...' : 'Connect Wallet'}</span>
+              </Button>
             ) : (
               <div className="flex items-center justify-between">
                 <div className="px-3 py-1.5 rounded-full text-sm font-medium bg-guardian-primary/10 text-guardian-primary border border-guardian-primary/20">
                   {shortenAddress(account)}
-                  {walletType === 'walletconnect' && (
-                    <span className="ml-1 text-xs opacity-70">(WC)</span>
-                  )}
                 </div>
                 <Button 
                   variant="ghost" 

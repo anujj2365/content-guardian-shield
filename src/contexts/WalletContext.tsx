@@ -3,16 +3,14 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { ethers } from 'ethers';
 import { toast } from '@/hooks/use-toast';
 import WalletConnectAnimation from '@/components/WalletConnectAnimation';
-import WalletConnectProvider from "@walletconnect/web3-provider";
 
 interface WalletContextType {
   account: string | null;
-  connectWallet: (walletType: 'metamask' | 'walletconnect') => Promise<void>;
+  connectWallet: () => Promise<void>;
   disconnectWallet: () => void;
   isConnecting: boolean;
   chainId: number | null;
   provider: ethers.providers.Web3Provider | null;
-  walletType: 'metamask' | 'walletconnect' | null;
 }
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
@@ -35,22 +33,18 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   const [chainId, setChainId] = useState<number | null>(null);
   const [provider, setProvider] = useState<ethers.providers.Web3Provider | null>(null);
   const [showConnectAnimation, setShowConnectAnimation] = useState(false);
-  const [walletType, setWalletType] = useState<'metamask' | 'walletconnect' | null>(null);
-  const [wcProvider, setWcProvider] = useState<WalletConnectProvider | null>(null);
 
   // Check if wallet was connected previously
   useEffect(() => {
     const storedAccount = localStorage.getItem('connectedWallet');
-    const storedWalletType = localStorage.getItem('walletType');
-    
-    if (storedAccount && storedWalletType) {
-      connectWallet(storedWalletType as 'metamask' | 'walletconnect');
+    if (storedAccount) {
+      connectWallet();
     }
   }, []);
 
-  // Handle events for MetaMask
+  // Setup event listeners when provider changes
   useEffect(() => {
-    if (provider && walletType === 'metamask') {
+    if (provider) {
       const handleAccountsChanged = (accounts: string[]) => {
         if (accounts.length === 0) {
           disconnectWallet();
@@ -84,52 +78,20 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         window.ethereum?.removeListener('disconnect', handleDisconnect);
       };
     }
-  }, [provider, account, walletType]);
+  }, [provider, account]);
 
-  // WalletConnect event handlers
-  useEffect(() => {
-    if (wcProvider) {
-      wcProvider.on("accountsChanged", (accounts: string[]) => {
-        if (accounts.length === 0) {
-          disconnectWallet();
-        } else {
-          setAccount(accounts[0]);
-          localStorage.setItem('connectedWallet', accounts[0]);
-          toast({
-            title: "Account Changed",
-            description: `Connected to ${shortenAddress(accounts[0])}`,
-          });
-        }
-      });
-
-      wcProvider.on("chainChanged", (chainId: number) => {
-        setChainId(chainId);
-        window.location.reload();
-      });
-
-      wcProvider.on("disconnect", () => {
-        disconnectWallet();
-      });
-
-      return () => {
-        wcProvider.removeListener("accountsChanged", () => {});
-        wcProvider.removeListener("chainChanged", () => {});
-        wcProvider.removeListener("disconnect", () => {});
-      };
-    }
-  }, [wcProvider]);
-
-  const connectMetaMask = async () => {
+  const connectWallet = async () => {
     if (!window.ethereum) {
       toast({
         title: "MetaMask not found",
         description: "Please install MetaMask browser extension to connect",
         variant: "destructive",
       });
-      setIsConnecting(false);
-      setShowConnectAnimation(false);
       return;
     }
+
+    setIsConnecting(true);
+    setShowConnectAnimation(true);
 
     try {
       const ethersProvider = new ethers.providers.Web3Provider(window.ethereum);
@@ -141,8 +103,6 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       setAccount(accounts[0]);
       setChainId(parseInt(chainIdHex, 16));
       localStorage.setItem('connectedWallet', accounts[0]);
-      localStorage.setItem('walletType', 'metamask');
-      setWalletType('metamask');
       
       toast({
         title: "Wallet Connected",
@@ -155,77 +115,16 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         description: error.message || "Failed to connect wallet",
         variant: "destructive",
       });
+    } finally {
+      setIsConnecting(false);
+      setShowConnectAnimation(false);
     }
-  };
-
-  const connectWalletConnect = async () => {
-    try {
-      const walletConnectProvider = new WalletConnectProvider({
-        rpc: {
-          1: "https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161", // Ethereum Mainnet
-          137: "https://polygon-rpc.com", // Polygon Mainnet
-          56: "https://bsc-dataseed.binance.org", // BSC Mainnet
-          // Add more chains as needed
-        },
-      });
-      
-      setWcProvider(walletConnectProvider);
-      
-      // Enable session (triggers QR Code modal)
-      await walletConnectProvider.enable();
-      
-      const ethersProvider = new ethers.providers.Web3Provider(walletConnectProvider);
-      setProvider(ethersProvider);
-      
-      const accounts = await ethersProvider.listAccounts();
-      const network = await ethersProvider.getNetwork();
-      
-      setAccount(accounts[0]);
-      setChainId(network.chainId);
-      localStorage.setItem('connectedWallet', accounts[0]);
-      localStorage.setItem('walletType', 'walletconnect');
-      setWalletType('walletconnect');
-      
-      toast({
-        title: "Wallet Connected",
-        description: `Connected to ${shortenAddress(accounts[0])}`,
-      });
-    } catch (error: any) {
-      console.error('WalletConnect error:', error);
-      toast({
-        title: "Connection Failed",
-        description: error.message || "Failed to connect wallet",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const connectWallet = async (type: 'metamask' | 'walletconnect') => {
-    setIsConnecting(true);
-    setShowConnectAnimation(true);
-
-    if (type === 'metamask') {
-      await connectMetaMask();
-    } else if (type === 'walletconnect') {
-      await connectWalletConnect();
-    }
-
-    setIsConnecting(false);
-    setShowConnectAnimation(false);
   };
 
   const disconnectWallet = () => {
-    if (walletType === 'walletconnect' && wcProvider) {
-      wcProvider.disconnect();
-      setWcProvider(null);
-    }
-    
     setAccount(null);
     setChainId(null);
-    setWalletType(null);
     localStorage.removeItem('connectedWallet');
-    localStorage.removeItem('walletType');
-    
     toast({
       title: "Wallet Disconnected",
       description: "Your wallet has been disconnected",
@@ -239,10 +138,9 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       disconnectWallet,
       isConnecting,
       chainId,
-      provider,
-      walletType
+      provider
     }}>
-      <WalletConnectAnimation isOpen={showConnectAnimation} walletType={walletType} />
+      <WalletConnectAnimation isOpen={showConnectAnimation} />
       {children}
     </WalletContext.Provider>
   );

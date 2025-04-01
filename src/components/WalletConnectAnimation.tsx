@@ -2,19 +2,13 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Wallet } from 'lucide-react';
-import { QRCodeSVG } from 'qrcode.react';
 
 interface WalletConnectAnimationProps {
   isOpen: boolean;
-  walletType?: 'metamask' | 'walletconnect' | null;
 }
 
-const WalletConnectAnimation: React.FC<WalletConnectAnimationProps> = ({ isOpen, walletType }) => {
+const WalletConnectAnimation: React.FC<WalletConnectAnimationProps> = ({ isOpen }) => {
   if (!isOpen) return null;
-
-  // For WalletConnect, the QR code is shown by the WalletConnect modal itself,
-  // so we just show a different message here
-  const isWalletConnect = walletType === 'walletconnect';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
@@ -33,12 +27,10 @@ const WalletConnectAnimation: React.FC<WalletConnectAnimationProps> = ({ isOpen,
           <Wallet className="h-16 w-16 text-guardian-primary" />
         </motion.div>
         <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">
-          {isWalletConnect ? "Connect with WalletConnect" : "Connecting to Wallet"}
+          Connecting to Wallet
         </h2>
         <p className="text-gray-600 dark:text-gray-400 mb-6">
-          {isWalletConnect 
-            ? "Scan the QR code with your wallet app to connect..." 
-            : "Please check your wallet to authorize the connection request..."}
+          Please check your wallet to authorize the connection request...
         </p>
         <div className="flex justify-center">
           <motion.div
