@@ -2,11 +2,13 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { Shield, Lock, FileText, Menu, X } from "lucide-react";
+import { Shield, Lock, FileText, Menu, X, Wallet, LogOut } from "lucide-react";
 import ThemeSwitcher from './ThemeSwitcher';
+import { useWallet, shortenAddress } from '@/contexts/WalletContext';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { account, connectWallet, disconnectWallet, isConnecting } = useWallet();
 
   const toggleMenu = () => {
     setIsMenuOpen(prev => !prev);
@@ -41,10 +43,32 @@ const Navbar = () => {
         <div className="flex items-center space-x-3 z-10">
           <ThemeSwitcher />
           
-          <Button variant="outline" size="sm" className="hidden md:flex items-center gap-1 border-guardian-primary/50 hover:border-guardian-primary text-guardian-primary hover:bg-guardian-primary/10 dark:border-guardian-primary/70 dark:text-guardian-primary">
-            <Lock className="h-4 w-4" />
-            <span>Connect Wallet</span>
-          </Button>
+          {!account ? (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="hidden md:flex items-center gap-1 border-guardian-primary/50 hover:border-guardian-primary text-guardian-primary hover:bg-guardian-primary/10 dark:border-guardian-primary/70 dark:text-guardian-primary"
+              onClick={connectWallet}
+              disabled={isConnecting}
+            >
+              <Wallet className="h-4 w-4" />
+              <span>{isConnecting ? 'Connecting...' : 'Connect Wallet'}</span>
+            </Button>
+          ) : (
+            <div className="hidden md:flex items-center gap-2">
+              <div className="px-3 py-1.5 rounded-full text-sm font-medium bg-guardian-primary/10 text-guardian-primary border border-guardian-primary/20">
+                {shortenAddress(account)}
+              </div>
+              <Button 
+                variant="ghost" 
+                size="icon"
+                onClick={disconnectWallet}
+                className="text-gray-500 hover:text-red-500"
+              >
+                <LogOut className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
           
           <Button className="hidden md:flex items-center gap-1 bg-gradient-to-r from-guardian-primary to-guardian-secondary hover:opacity-90 text-white">
             <FileText className="h-4 w-4" />
@@ -95,11 +119,41 @@ const Navbar = () => {
             License
           </Link>
           <div className="pt-2 flex flex-col space-y-3">
-            <Button variant="outline" className="w-full justify-center items-center gap-1 border-guardian-primary/50 hover:border-guardian-primary">
-              <Lock className="h-4 w-4" />
-              <span>Connect Wallet</span>
-            </Button>
-            <Button className="w-full justify-center items-center gap-1 bg-gradient-to-r from-guardian-primary to-guardian-secondary hover:opacity-90">
+            {!account ? (
+              <Button 
+                variant="outline" 
+                className="w-full justify-center items-center gap-1 border-guardian-primary/50 hover:border-guardian-primary"
+                onClick={() => {
+                  connectWallet();
+                  setIsMenuOpen(false);
+                }}
+                disabled={isConnecting}
+              >
+                <Wallet className="h-4 w-4" />
+                <span>{isConnecting ? 'Connecting...' : 'Connect Wallet'}</span>
+              </Button>
+            ) : (
+              <div className="flex items-center justify-between">
+                <div className="px-3 py-1.5 rounded-full text-sm font-medium bg-guardian-primary/10 text-guardian-primary border border-guardian-primary/20">
+                  {shortenAddress(account)}
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  onClick={() => {
+                    disconnectWallet();
+                    setIsMenuOpen(false);
+                  }}
+                  className="text-gray-500 hover:text-red-500"
+                >
+                  <LogOut className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+            <Button 
+              className="w-full justify-center items-center gap-1 bg-gradient-to-r from-guardian-primary to-guardian-secondary hover:opacity-90"
+              onClick={() => setIsMenuOpen(false)}
+            >
               <FileText className="h-4 w-4" />
               <span>My Content</span>
             </Button>
