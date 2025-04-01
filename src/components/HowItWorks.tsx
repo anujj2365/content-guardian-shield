@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Upload, Shield, Search, Link } from 'lucide-react';
 
 const steps = [
@@ -34,11 +34,38 @@ const steps = [
 ];
 
 const HowItWorks = () => {
+  const sectionRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          const elements = entry.target.querySelectorAll('.step-item');
+          elements.forEach((el, index) => {
+            setTimeout(() => {
+              el.classList.add('fade-in-up');
+            }, index * 200);
+          });
+        }
+      });
+    }, { threshold: 0.2 });
+
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current);
+    }
+
+    return () => {
+      if (sectionRef.current) {
+        observer.unobserve(sectionRef.current);
+      }
+    };
+  }, []);
+
   return (
-    <section className="py-16 bg-white dark:bg-gray-900">
+    <section ref={sectionRef} className="py-16 bg-white/30 dark:bg-gray-900/30 backdrop-blur-sm rounded-3xl mx-4 md:mx-8 lg:mx-16 shadow-lg border border-white/10 dark:border-gray-800/20">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gray-900 dark:text-white">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gray-900 dark:text-white gradient-text">
             How It Works
           </h2>
           <p className="text-lg text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
@@ -48,19 +75,20 @@ const HowItWorks = () => {
         
         <div className="max-w-5xl mx-auto">
           {steps.map((step, index) => (
-            <div key={index} className="flex items-start md:items-center mb-12 last:mb-0">
-              <div className={`${step.color} rounded-full p-3 flex items-center justify-center shrink-0`}>
+            <div key={index} className="step-item flex items-start md:items-center mb-12 last:mb-0 opacity-0" style={{animationDelay: `${index * 0.2}s`}}>
+              <div className={`${step.color} rounded-full p-3 flex items-center justify-center shrink-0 relative group transition-all duration-300 hover:scale-110`}>
+                <div className="absolute inset-0 rounded-full bg-white/20 scale-0 group-hover:scale-150 opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
                 {step.icon}
               </div>
               
               <div className="ml-4 md:ml-8">
                 <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white flex items-center">
-                  <span className="inline-block mr-2 text-sm font-bold bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full h-6 w-6 flex items-center justify-center">
+                  <span className="inline-block mr-2 text-sm font-bold bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full h-6 w-6 flex items-center justify-center transform transition-transform duration-300 group-hover:rotate-12">
                     {step.number}
                   </span>
                   {step.title}
                 </h3>
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-gray-600 dark:text-gray-400 max-w-xl">
                   {step.description}
                 </p>
               </div>
