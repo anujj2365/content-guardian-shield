@@ -91,10 +91,16 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply tracking-tight;
   }
 }
 
+/* Web3 UI Elements */
 .gradient-border {
   --border-width: 2px;
   position: relative;
@@ -122,4 +128,53 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-image: linear-gradient(90deg, hsl(var(--primary)), hsl(var(--secondary)));
+}
+
+/* Glass effect for cards and containers */
+.glass {
+  @apply bg-white/20 dark:bg-gray-900/30 backdrop-blur-lg border border-white/20 dark:border-gray-800/30;
+}
+
+/* Web3 animations */
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 10px rgba(10, 132, 255, 0.5);
+  }
+  50% {
+    opacity: 0.7;
+    box-shadow: 0 0 20px rgba(10, 132, 255, 0.8);
+  }
+}
+
+.pulse-glow {
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+/* Blockchain node connection animation */
+@keyframes node-connection {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  80% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+.node-connection::after {
+  content: '';
+  position: absolute;
+  border: 2px solid hsl(var(--primary));
+  border-radius: 50%;
+  animation: node-connection 2s ease-out infinite;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
 }
